@@ -52,6 +52,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: CleanBot
       objectReference: {fileID: 0}
+    - target: {fileID: 6141453484299225315, guid: 94e14a9ccf270e842b527bcd73584e90, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6141453484299225315, guid: 94e14a9ccf270e842b527bcd73584e90, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6141453484299225315, guid: 94e14a9ccf270e842b527bcd73584e90, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 6141453484299225315, guid: 94e14a9ccf270e842b527bcd73584e90, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.7071068
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -133,6 +149,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fae538e2c471a0479322426132dc82b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player_Movement
+  player: 0
   speed: 5
-  jumpForce: 5
-  isGrounded: 1
+  turnSpeed: 15
