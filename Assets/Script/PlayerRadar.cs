@@ -137,7 +137,11 @@ public class PlayerRadar : MonoBehaviour
         // Si es P1, puede ser el propio objeto donde esté colgado este script
         if (playerIndex == 0)
         {
-            return GetComponent<Camera>() ?? Camera.main;
+            if (TryGetComponent<Camera>(out var myCam) && myCam != null)
+            {
+                return myCam;
+            }
+            return Camera.main;
         }
 
         return null;

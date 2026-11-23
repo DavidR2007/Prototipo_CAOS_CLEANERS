@@ -26,6 +26,25 @@ public class Player_Movement : MonoBehaviour
     [Tooltip("Índice de jugador (P1 a P4)")]
     public PlayerID playerID = PlayerID.Player1;
 
+    [Header("Indicador de Base (Círculo de Color)")]
+    [Tooltip("Muestra un círculo de color bajo los pies del robot para diferenciarlo al instante.")]
+    public bool showBaseCircle = true;
+
+    [Tooltip("Diámetro del círculo bajo el robot")]
+    [SerializeField] private float baseCircleDiameter = 1.4f;
+
+    [Tooltip("Color personalizado (si se deja transparente, usa el color oficial asignado a este PlayerID)")]
+    public Color customCircleColor = Color.clear;
+
+    // Paleta oficial compartida para sincronía perfecta con el Radar y la guía
+    public static readonly Color[] DefaultPlayerColors = new Color[4]
+    {
+        new Color(1f, 0.85f, 0.2f, 1f), // P1: Amarillo / Dorado
+        new Color(0.2f, 0.85f, 1f, 1f), // P2: Cian
+        new Color(1f, 0.35f, 0.75f, 1f),// P3: Magenta
+        new Color(0.35f, 1f, 0.4f, 1f)  // P4: Verde Lima
+    };
+
     [Header("Parámetros de Conducción")]
     [Tooltip("Velocidad de traslación horizontal")]
     [SerializeField] private float speed = 12f;
@@ -44,6 +63,9 @@ public class Player_Movement : MonoBehaviour
     private Rigidbody rb;
     private Vector3 currentInputDirection;
     private bool isInputActive;
+    private SpriteRenderer baseCircleRenderer;
+    private static Sprite baseRingSprite;
+    private static Texture2D baseRingTexture;
 
     // Propiedades públicas para consultar estado desde otros sistemas
     public int PlayerIndex => (int)playerID;
@@ -59,21 +81,27 @@ public class Player_Movement : MonoBehaviour
         transform.rotation = Quaternion.Euler(0f, currentAngles.y, 0f);
     }
 
+    private void Start()
+    {
+        if (showBaseCircle)
+        {
+            SetupBaseCircleIndicator();
+        }
+    }
+
     private void InitializePhysics()
     {
         rb = GetComponent<Rigidbody>();
 
-        // REGLA CRUCIAL: Congelar rotación física en TODOS los ejes (X, Y, Z).
-        // Si Y no está congelado en físicas, las colisiones le darán inercia de peonza/trompo infinito.
+
         rb.constraints = RigidbodyConstraints.FreezeRotation;
 
-        // Anular cualquier rotación física residual
         rb.angularVelocity = Vector3.zero;
 
-        // Interpolación para movimiento fluido sin tirones visuales de cámara
+
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-        // Detección continua para colisiones a alta velocidad
+
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
@@ -84,10 +112,10 @@ public class Player_Movement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Cancelar absolutamente cualquier momento angular físico para que nunca gire como peonza al estar quieto
+
         rb.angularVelocity = Vector3.zero;
 
-        // Corrección de seguridad: si alguna colisión física desvía X o Z, corregir inmediatamente a vertical
+
         Vector3 euler = transform.eulerAngles;
         if (Mathf.Abs(euler.x) > 0.01f || Mathf.Abs(euler.z) > 0.01f)
         {
@@ -199,6 +227,112 @@ public class Player_Movement : MonoBehaviour
             float newX = Mathf.MoveTowards(currentVel.x, 0f, deceleration * Time.fixedDeltaTime);
             float newZ = Mathf.MoveTowards(currentVel.z, 0f, deceleration * Time.fixedDeltaTime);
             rb.linearVelocity = new Vector3(newX, currentVel.y, newZ);
+        }
+    }
+
+    /// <summary>
+    /// Configura el círculo de color brillante en la base del robot.
+    /// </summary>
+    public void SetupBaseCircleIndicator()
+    {
+        Transform existing = transform.Find("BaseColorCircle");
+        GameObject ringObj;
+
+        if (existing != null)
+        {
+            ringObj = existing.gameObject;
+        }
+        else
+        {
+            ringObj = new GameObject("BaseColorCircle");
+            ringObj.transform.SetParent(transform, false);
+        }
+
+        ringObj.transform.localPosition = new Vector3(0f, 0.02f, 0f); 
+        ringObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); 
+        ringObj.transform.localScale = Vector3.one * baseCircleDiameter;
+
+        
+        if (!ringObj.TryGetComponent<SpriteRenderer>(out baseCircleRenderer) || baseCircleRenderer == null)
+        {
+            baseCircleRenderer = ringObj.AddComponent<SpriteRenderer>();
+        }
+
+        if (baseCircleRenderer != null)
+        {
+            baseCircleRenderer.sprite = GetOrCreateRingSprite();
+            baseCircleRenderer.color = GetPlayerColor();
+            baseCircleRenderer.sortingOrder = 1; // Se dibuja sobre el suelo
+        }
+
+        ringObj.SetActive(showBaseCircle);
+    }
+
+    public Color GetPlayerColor()
+    {
+        if (customCircleColor.a > 0.05f) return customCircleColor;
+        int idx = Mathf.Clamp((int)playerID, 0, DefaultPlayerColors.Length - 1);
+        return DefaultPlayerColors[idx];
+    }
+
+    private static Sprite GetOrCreateRingSprite()
+    {
+        if (baseRingSprite != null) return baseRingSprite;
+
+        int size = 128;
+        baseRingTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        baseRingTexture.filterMode = FilterMode.Bilinear;
+        Color[] cols = new Color[size * size];
+
+        Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+        float radius = (size * 0.5f) - 4f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dist = Vector2.Distance(new Vector2(x, y), center);
+                float norm = dist / radius;
+
+                if (norm > 1f)
+                {
+                    cols[y * size + x] = Color.clear;
+                }
+                else if (norm >= 0.74f && norm <= 0.96f)
+                {
+                    
+                    float edgeAlpha = 1f;
+                    if (norm > 0.90f) edgeAlpha = Mathf.InverseLerp(0.96f, 0.90f, norm);
+                    else if (norm < 0.78f) edgeAlpha = Mathf.InverseLerp(0.74f, 0.78f, norm);
+
+                    cols[y * size + x] = new Color(1f, 1f, 1f, edgeAlpha * 0.95f);
+                }
+                else if (norm < 0.74f)
+                {
+                    
+                    float innerGlow = Mathf.Lerp(0.20f, 0.08f, norm / 0.74f);
+                    cols[y * size + x] = new Color(1f, 1f, 1f, innerGlow);
+                }
+                else
+                {
+                    cols[y * size + x] = Color.clear;
+                }
+            }
+        }
+
+        baseRingTexture.SetPixels(cols);
+        baseRingTexture.Apply();
+        baseRingSprite = Sprite.Create(baseRingTexture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        return baseRingSprite;
+    }
+
+    private void OnValidate()
+    {
+        if (baseCircleRenderer != null)
+        {
+            baseCircleRenderer.gameObject.SetActive(showBaseCircle);
+            baseCircleRenderer.color = GetPlayerColor();
+            baseCircleRenderer.transform.localScale = Vector3.one * baseCircleDiameter;
         }
     }
 }
