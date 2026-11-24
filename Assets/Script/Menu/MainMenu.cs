@@ -70,22 +70,18 @@ public class MainMenu : MonoBehaviour
     public void PlayGame()
     {
         PlaySound();
+        Debug.Log($"[MainMenu] Click en PLAY. Intentando cargar escena: '{gameSceneName}'");
 
-        if (!string.IsNullOrEmpty(gameSceneName) && Application.CanStreamedLevelBeLoaded(gameSceneName))
+        try
         {
             SceneManager.LoadScene(gameSceneName);
         }
-        else
+        catch (System.Exception ex)
         {
-            // Si la escena no está en Build Settings por nombre, intentar cargar el siguiente índice
-            int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
-            if (nextIndex < SceneManager.sceneCountInBuildSettings)
+            Debug.LogError($"[MainMenu] Error al cargar escena '{gameSceneName}': {ex.Message}. Intentando por índice 1...");
+            if (SceneManager.sceneCountInBuildSettings > 1)
             {
-                SceneManager.LoadScene(nextIndex);
-            }
-            else
-            {
-                Debug.LogWarning($"[MainMenu] La escena '{gameSceneName}' no está en Build Settings. Añádela en File > Build Settings.");
+                SceneManager.LoadScene(1);
             }
         }
     }
