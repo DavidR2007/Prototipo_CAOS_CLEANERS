@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Minimalist Studio Logo 1: Magnetic Industrial Gear -->
+  <!-- Solid Black Silhouette, Transparent Background -->
+  <g fill="#000000" fill-rule="evenodd">
+    <!-- Outer Heavy Industrial Gear -->
+    <path d="
+      M 216,36 L 296,36 L 302,80 C 322,86 341,95 358,107 L 398,87 L 439,128 L 419,168 C 431,185 440,204 446,224 L 490,230 L 490,310 L 446,316 C 440,336 431,355 419,372 L 439,412 L 398,453 L 358,433 C 341,445 322,454 302,460 L 296,504 L 216,504 L 210,460 C 190,454 171,445 154,433 L 114,453 L 73,412 L 93,372 C 81,355 72,336 66,316 L 22,310 L 22,230 L 66,224 C 72,204 81,185 93,168 L 73,128 L 114,87 L 154,107 C 171,95 190,86 210,80 Z
+      M 256,112 C 342,112 412,182 412,268 C 412,354 342,424 256,424 C 170,424 100,354 100,268 C 100,182 170,112 256,112 Z
+    "/>
+    
+    <!-- Central Heavy Horseshoe Magnet / Suction Core -->
+    <path d="
+      M 166,180 L 216,180 L 216,280 C 216,302 234,320 256,320 C 278,320 296,302 296,280 L 296,180 L 346,180 L 346,280 C 346,330 306,370 256,370 C 206,370 166,330 166,280 Z
+    "/>
+    
+    <!-- Magnet Poles Accent Blocks -->
+    <rect x="166" y="160" width="50" height="12"/>
+    <rect x="296" y="160" width="50" height="12"/>
+    
+    <!-- Central Robotic Core / Vacuum Dot -->
+    <circle cx="256" cy="245" r="24"/>
+  </g>
+</svg>

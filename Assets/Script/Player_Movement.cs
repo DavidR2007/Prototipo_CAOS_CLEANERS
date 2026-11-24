@@ -66,6 +66,8 @@ public class Player_Movement : MonoBehaviour
     private SpriteRenderer baseCircleRenderer;
     private static Sprite baseRingSprite;
     private static Texture2D baseRingTexture;
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
 
     // Propiedades públicas para consultar estado desde otros sistemas
     public int PlayerIndex => (int)playerID;
@@ -76,9 +78,30 @@ public class Player_Movement : MonoBehaviour
     {
         InitializePhysics();
 
+        // Guardar posición y orientación inicial para reaparición en caso de caída a la DeadZone
+        initialPosition = transform.position;
+        initialRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
         // Forzar al robot a levantarse erguido (0 grados en X y Z) si estaba inclinado en la escena
-        Vector3 currentAngles = transform.eulerAngles;
-        transform.rotation = Quaternion.Euler(0f, currentAngles.y, 0f);
+        transform.rotation = initialRotation;
+    }
+
+    /// <summary>
+    /// Devuelve al jugador a su posición inicial y anula cualquier inercia física (velocidad lineal y angular).
+    /// </summary>
+    public void Respawn()
+    {
+        transform.position = initialPosition;
+        transform.rotation = initialRotation;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        currentInputDirection = Vector3.zero;
+        isInputActive = false;
     }
 
     private void Start()

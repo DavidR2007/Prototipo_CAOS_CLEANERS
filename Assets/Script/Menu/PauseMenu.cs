@@ -25,7 +25,7 @@ public class PauseMenu : MonoBehaviour
 
     [Header("Navegación")]
     [Tooltip("Nombre de la escena del Menú Principal")]
-    [SerializeField] private string mainMenuSceneName = "01_MainMenu";
+    [SerializeField] private string mainMenuSceneName = "MAIN_MENU";
 
     private bool isPaused = false;
 
@@ -44,6 +44,8 @@ public class PauseMenu : MonoBehaviour
 
     private void CheckPauseInput()
     {
+        if (GameTimer.Instance != null && GameTimer.Instance.PartidaTerminada) return;
+
         bool pausePressed = false;
 
         // Teclado (Tecla Escape)
@@ -77,7 +79,11 @@ public class PauseMenu : MonoBehaviour
         isPaused = !isPaused;
         Time.timeScale = isPaused ? 0f : 1f;
 
-        if (pausePanel != null) pausePanel.SetActive(isPaused);
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(isPaused);
+            if (isPaused) pausePanel.transform.SetAsLastSibling();
+        }
         if (optionsPanel != null) optionsPanel.SetActive(false);
 
         if (isPaused)
@@ -102,14 +108,22 @@ public class PauseMenu : MonoBehaviour
     public void OpenOptions()
     {
         if (pausePanel != null) pausePanel.SetActive(false);
-        if (optionsPanel != null) optionsPanel.SetActive(true);
+        if (optionsPanel != null)
+        {
+            optionsPanel.SetActive(true);
+            optionsPanel.transform.SetAsLastSibling();
+        }
         SelectButton(firstOptionsButton);
     }
 
     public void CloseOptions()
     {
         if (optionsPanel != null) optionsPanel.SetActive(false);
-        if (pausePanel != null) pausePanel.SetActive(true);
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(true);
+            pausePanel.transform.SetAsLastSibling();
+        }
         SelectButton(firstPauseButton);
     }
 

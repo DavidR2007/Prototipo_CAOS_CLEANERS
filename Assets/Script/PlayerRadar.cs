@@ -151,6 +151,7 @@ public class PlayerRadar : MonoBehaviour
     {
         GameObject obj = new GameObject(name, typeof(RectTransform));
         obj.transform.SetParent(radarCanvas.transform, false);
+        obj.transform.SetAsFirstSibling(); // Siempre debajo de menús de pausa y paneles
 
         RectTransform rt = obj.GetComponent<RectTransform>();
         rt.sizeDelta = arrowSize;
@@ -167,6 +168,16 @@ public class PlayerRadar : MonoBehaviour
     private void LateUpdate()
     {
         if (playerEntries.Count < 2) return;
+
+        // Ocultar flechas del radar cuando el juego está en pausa o terminado (Time.timeScale == 0)
+        if (Time.timeScale == 0f)
+        {
+            for (int i = 0; i < playerEntries.Count; i++)
+            {
+                HideAllArrowsForPlayer(playerEntries[i]);
+            }
+            return;
+        }
 
         // Actualizar los radares de cada jugador
         for (int i = 0; i < playerEntries.Count; i++)

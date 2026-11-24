@@ -6,8 +6,8 @@ using UnityEngine;
 /// 
 /// Se ejecuta en la escena MAIN_MENU (índice 0) antes que ningún otro script
 /// (ExecutionOrder -100). Lee el archivo launcher_config.json que el Launcher
-/// deposita junto al ejecutable del juego y aplica resolución, pantalla completa
-/// y calidad gráfica.
+/// deposita junto al ejecutable del juego y aplica resolución, pantalla completa,
+/// calidad gráfica y resolución de texturas (globalTextureMipmapLimit).
 /// 
 /// Si el archivo no existe (ej. primer arranque sin launcher o desde el editor),
 /// usa los valores guardados en PlayerPrefs o la resolución nativa del monitor.
@@ -39,17 +39,29 @@ public class BootstrapManager : MonoBehaviour
 
     /// <summary>
     /// Devuelve la ruta absoluta del launcher_config.json.
-    /// En build: junto al .exe del juego (un nivel arriba de _Data/).
-    /// En editor: en la raíz del proyecto.
+    /// Busca de forma inteligente tanto si el juego está en la misma carpeta que el launcher,
+    /// como si está dentro de una subcarpeta (ej: Launcher/Main_Game/PROT.exe).
     /// </summary>
     public static string GetConfigPath()
     {
 #if UNITY_EDITOR
-        return Path.Combine(Application.dataPath, "..", "launcher_config.json");
+        string editorPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "launcher_config.json"));
+        if (File.Exists(editorPath)) return editorPath;
+        return editorPath;
 #else
-        // Application.dataPath en build standalone = ruta a ChaosCleaners_Data/
-        // El .exe y el launcher están un nivel arriba
-        return Path.Combine(Application.dataPath, "..", "launcher_config.json");
+        // 1. Probar en la misma carpeta que el .exe (un nivel arriba de _Data/)
+        string nextToExe = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "launcher_config.json"));
+        if (File.Exists(nextToExe)) return nextToExe;
+
+        // 2. Probar en la carpeta padre (por si el juego está dentro de una subcarpeta, ej: Launcher/Main_Game/)
+        string parentFolder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "launcher_config.json"));
+        if (File.Exists(parentFolder)) return parentFolder;
+
+        // 3. Probar en el directorio de trabajo activo
+        string cwdPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "launcher_config.json"));
+        if (File.Exists(cwdPath)) return cwdPath;
+
+        return nextToExe;
 #endif
     }
 
@@ -65,7 +77,7 @@ public class BootstrapManager : MonoBehaviour
             {
                 string json = File.ReadAllText(path);
                 LauncherConfig loaded = JsonUtility.FromJson<LauncherConfig>(json);
-                Debug.Log($"[BootstrapManager] Config del Launcher cargada: {loaded.resolutionWidth}x{loaded.resolutionHeight}, fullscreen={loaded.fullscreen}, quality={loaded.qualityLevel}");
+                Debug.Log($"[BootstrapManager] Config del Launcher cargada con éxito desde '{path}': {loaded.resolutionWidth}x{loaded.resolutionHeight}, fullscreen={loaded.fullscreen}, quality={loaded.qualityLevel}");
                 return loaded;
             }
             catch (System.Exception ex)
@@ -75,7 +87,7 @@ public class BootstrapManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("[BootstrapManager] launcher_config.json no encontrado. Usando resolución nativa.");
+            Debug.Log($"[BootstrapManager] launcher_config.json no encontrado en '{path}'. Usando resolución nativa.");
         }
 
         // Fallback: resolución nativa del monitor
@@ -110,7 +122,27 @@ public class BootstrapManager : MonoBehaviour
         int clampedQuality = Mathf.Clamp(cfg.qualityLevel, 0, QualitySettings.names.Length - 1);
         QualitySettings.SetQualityLevel(clampedQuality, true);
 
-        Debug.Log($"[BootstrapManager] Resolución aplicada: {cfg.resolutionWidth}x{cfg.resolutionHeight} {mode}, quality={clampedQuality}");
+        // Control explícito de la resolución de texturas y filtrado según nivel:
+        // 0 (Bajo): Texturas a 1/4 de resolución (visiblemente ligero y con máximo rendimiento)
+        // 1 (Medio): Texturas a la mitad (1/2) de resolución
+        // 2 (Alto) / 3 (Ultra): Texturas al 100% (resolución completa)
+        if (cfg.qualityLevel == 0)
+        {
+            QualitySettings.globalTextureMipmapLimit = 2;
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.Disable;
+        }
+        else if (cfg.qualityLevel == 1)
+        {
+            QualitySettings.globalTextureMipmapLimit = 1;
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.Enable;
+        }
+        else
+        {
+            QualitySettings.globalTextureMipmapLimit = 0;
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+        }
+
+        Debug.Log($"[BootstrapManager] Ajustes aplicados: {cfg.resolutionWidth}x{cfg.resolutionHeight} {mode}, quality={clampedQuality}, MipmapLimit={QualitySettings.globalTextureMipmapLimit}");
     }
 }
 
