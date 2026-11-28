@@ -60,6 +60,12 @@ public class PauseMenu : MonoBehaviour
             pausePressed = true;
         }
 
+        // Petición de pausa desde el mando móvil (Controller_CC)
+        if (!pausePressed && NetworkServer.Instance != null && NetworkServer.Instance.ConsumePauseRequest())
+        {
+            pausePressed = true;
+        }
+
         if (pausePressed)
         {
             // Si está en opciones, volver al menú de pausa; de lo contrario alternar pausa
@@ -90,6 +96,8 @@ public class PauseMenu : MonoBehaviour
         {
             SelectButton(firstPauseButton);
         }
+
+        NetworkServer.Instance?.BroadcastPaused(isPaused);
     }
 
     public void ResumeGame()
@@ -97,6 +105,7 @@ public class PauseMenu : MonoBehaviour
         isPaused = false;
         Time.timeScale = 1f;
         CloseAllPanels();
+        NetworkServer.Instance?.BroadcastPaused(false);
     }
 
     public void RestartMatch()

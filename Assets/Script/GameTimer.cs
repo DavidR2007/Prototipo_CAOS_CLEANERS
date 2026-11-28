@@ -45,10 +45,10 @@ public class GameTimer : MonoBehaviour
     // Colores oficiales por jugador de Player_Movement
     private static readonly Color[] coloresJugador = new Color[]
     {
-        new Color(1.0f, 0.84f, 0.0f),  // P1: 1.0f, 0.84f, 0.0f Amarillo  
-        new Color(0.0f, 0.90f, 1.0f),  // P2: 0.0f, 0.90f, 1.0f Cyan
-        new Color(1.0f, 0.24f, 0.0f),  // P3: 1.0f, 0.24f, 0.0f Rojo Coral
-        new Color(0.0f, 0.90f, 0.46f)  // P4: 0.0f, 0.90f, 0.46f Verde Lima 
+        new Color(0.0f, 0.90f, 1.0f),  // P1: Cyan
+        new Color(1.0f, 0.24f, 0.0f),  // P2: Rojo Coral
+        new Color(1.0f, 0.84f, 0.0f),  // P3: Amarillo Ámbar
+        new Color(0.0f, 0.90f, 0.46f)  // P4: Verde Lima
     };
 
     public float TiempoRestante => tiempoRestante;
@@ -69,16 +69,16 @@ public class GameTimer : MonoBehaviour
 
     private void Start()
     {
-
+        // 1. Respaldo: asegurar que existan los elementos en el Canvas
         EnsureCanvasUI();
 
-
+        // 2. Asegurarse de que el panel de ganador empiece oculto
         if (panelGanador != null)
         {
             panelGanador.SetActive(false);
         }
 
-
+        // 3. Vincular botones
         if (botonReiniciar != null)
         {
             botonReiniciar.onClick.RemoveAllListeners();
@@ -120,27 +120,25 @@ public class GameTimer : MonoBehaviour
         int minutos = Mathf.FloorToInt(tiempoRestante / 60f);
         int segundos = Mathf.FloorToInt(tiempoRestante % 60f);
 
-
         textoTimer.text = $"{minutos:00}:{segundos:00}";
 
-
-
+        // Tinte rojo de advertencia en los últimos 10 segundos
         if (tiempoRestante <= 10f && tiempoRestante > 0f)
         {
             textoTimer.color = Color.red;
         }
         else if (tiempoRestante > 10f)
         {
-            textoTimer.color = Color.black;
+            textoTimer.color = Color.white;
         }
     }
 
     private void FinalizarPartida()
     {
         partidaTerminada = true;
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f; // Detener físicas y movimiento
 
-
+        // 1. Detectar qué jugadores están activos en la partida
         Player_Movement[] jugadoresEnEscena = FindObjectsByType<Player_Movement>(FindObjectsInactive.Exclude);
         List<int> jugadoresActivos = new List<int>();
 
@@ -152,14 +150,14 @@ public class GameTimer : MonoBehaviour
             }
         }
 
-
+        // Fallback mínimo de 2 jugadores si no los encontró
         if (jugadoresActivos.Count == 0)
         {
             jugadoresActivos.Add(0);
             jugadoresActivos.Add(1);
         }
 
-
+        // 2. Determinar la puntuación máxima y ganadores
         int maxPuntos = -1;
         List<int> ganadores = new List<int>();
 
@@ -179,6 +177,7 @@ public class GameTimer : MonoBehaviour
             }
         }
 
+        // 3. Formatear mensaje de victoria
         if (textoGanador != null)
         {
             if (ganadores.Count == 1)

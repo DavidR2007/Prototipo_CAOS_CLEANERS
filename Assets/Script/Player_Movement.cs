@@ -208,6 +208,17 @@ public class Player_Movement : MonoBehaviour
             }
         }
 
+        // Lectura de mando móvil conectado por WebSocket (Controller_CC)
+        if (NetworkServer.Instance != null)
+        {
+            Vector2 remoteStick = NetworkServer.Instance.GetMoveInput(padIndex);
+            if (remoteStick.sqrMagnitude > 0.01f)
+            {
+                horizontal = remoteStick.x;
+                vertical = remoteStick.y;
+            }
+        }
+
         Vector3 inputDir = new Vector3(horizontal, 0f, vertical);
         if (inputDir.sqrMagnitude > 1f)
         {
